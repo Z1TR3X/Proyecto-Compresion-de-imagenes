@@ -276,9 +276,465 @@ Mientras el método directo requiere $64 \\times 64 = 4096$ multiplicaciones por
 
 
 
+La transformación de una imagen es una clase de matrices unitarias utilizadas para representar imágenes. Así como una señal 1D se expresa mediante funciones base ortogonales, una imagen puede expandirse usando un conjunto discreto de arreglos llamados imágenes base *(basis images)*.
+
+
+
+**Vectorialmente:**
+
+Una imagen de tamaño $N \\times N$ también puede verse como un vector de dimensión $N^2 \\times 1$, donde la transformada proporciona un nuevo sistema de coordenadas (vectores base) para ese espacio vectorial.
+
+
+
+**Transformación unitaria: 1D**
+
+Para una secuencia unidimensional $u(n)$ representada como un vector $\\mathbf{u}$ de tamaño $N$:
+
+* Transformada directa:
+
+
+
+&#x09;	$\\mathbf{v} = \\mathbf{A}\\mathbf{u} \\implies v(k) = \\sum\_{n=0}^{N-1} a(k,n)u(n)$. 
+
+
+
+* Transformada inversa: Dado que la matriz $\\mathbf{A}$ es unitaria, su inversa es igual a su transpuesta conjugada ($\\mathbf{A}^{-1} = \\mathbf{A}^{\*T}$). Por lo tanto, la señal original se recupera como:
+
+
+
+&#x09;	$$\\mathbf{u} = \\mathbf{A}^{\*T}\\mathbf{v} \\implies u(n) = \\sum\_{k=0}^{N-1} v(k)a^\*(k,n)$$
+
+
+
+**Vectores base:**
+
+Las columnas de la matriz inversa $\\mathbf{A}^{\*T}$ (denotadas como $\\mathbf{a}\_k^\*$) se llaman vectores base (basis vectors) de $\\mathbf{A}$. La ecuación inversa (5.2) muestra que cualquier secuencia $u(n)$ se puede reconstruir como una suma ponderada de estos vectores base. 
+
+Utilidad de los coeficientes $v(k)$: Los coeficientes obtenidos representan la señal original en otro dominio y son fundamentales para tareas como filtrado, compresión de datos y extracción de características.
+
+
+
+**Tranformación Bidimensaional 2D**
+
+Para una imagen bidimensional $u(m,n)$ de tamaño $N \\times N$, la expansión ortogonal general se define mediante dos ecuaciones: 
+
+* **Transformada Directa:**
+
+Convierte los píxeles $u(m,n)$ en coeficientes de transformada $v(k,l)$, los cuales forman la matriz $\\mathbf{V}$ llamada imagen transformada:
+
+
+
+&#x09;	$$v(k,l) = \\sum\_{m,n=0}^{N-1} u(m,n) \\, a\_{k,l}(m,n), \\quad 0 \\le k, l \\le N-1$$
+
+
+
+* **Transformada Inversa:**
+
+Reconstruye la imagen original a partir de los coeficientes:
+
+
+
+&#x09;	$$u(m,n) = \\sum\_{k,l=0}^{N-1} v(k,l) \\, a^\*\_{k,l}(m,n), \\quad 0 \\le m, n \\le N-1$$
+
+
+
+**Propiedades del Núcleo de Transformación $\\{a\_{k,l}(m,n)\\}$:**
+
+
+
+El conjunto de funciones base discretas debe cumplir dos condiciones fundamentales:
+
+
+
+1. **Ortonormalidad:** Las funciones base son perpendiculares entre sí y tienen energía unitaria.
+
+
+
+&#x09;		$\\sum a\_{k,l}(m,n) a^\*\_{k',l'}(m,n) = \\delta(k-k', l-l')$
+
+
+
+Esto evita redundancia entre los coeficientes.
+
+
+
+**2.   Completitud:** El conjunto de funciones base es suficiente para representar cualquier imagen de tamaño $N \\times N$ sin que falte información.
+
+
+
+&#x09;	$\\sum a\_{k,l}(m,n) a^\*\_{k,l}(m',n') = \\delta(m-m', n-n')$
+
+
+
+Importancia para la Compresión (Truncamiento y Error Mínimo):
+
+
+
+**Expansión Truncada:** : Si en lugar de usar todos los $N \\times N$ coeficientes solo usamos un subconjunto más pequeño ($P \\le N$ y $Q \\le N$) para aproximar la imagen ($u\_{P,Q}(m,n)$), la propiedad de ortonormalidad garantiza que los coeficientes $v(k,l)$ calculados en (5.3) minimizan la suma del error cuadrático.
+
+
+
+&#x09;	$$\\sigma\_e^2 = \\sum\_{m,n=0}^{N-1} \[u(m,n) - u\_{P,Q}(m,n)]^2$$
+
+
+
+**Reconstrucción Exacta:** La propiedad de completitud asegura que si no descartamos ningún coeficiente ($P = Q = N$), el error $\\sigma\_e^2$ será exactamente cero (compresión sin pérdida de información en la transformación).
+
+
+
+**Separabilidad:**
+
+
+
+Calcular directamente una transformada 2D general (ecuación 5.3) requiere un número de multiplicaciones y sumas del orden de $O(N^4)$, lo cual resulta excesivo e impráctico para imágenes de tamaño real.  La complejidad computacional se reduce drásticamente de $O(N^4)$ a $O(N^3)$ (e incluso menos si se usan algoritmos rápidos) cuando se restringe la transformada para que sea separable.
+
+Un núcleo 2D $a\_{k,l}(m,n)$ es separable si puede expresarse como el producto de dos funciones base unidimensionales (una para las filas y otra para las columnas):
+
+
+
+&#x09;	$$a\_{k,l}(m,n) = a\_k(m) \\, b\_l(n) \\triangleq a(k,m) \\, b(l,n)$$
+
+
+
+**Matrices Unitarias 1D:**
+
+
+
+Para que la transformada 2D siga siendo ortonormal y completa (cumpliendo las ecuaciones 5.5 y 5.6), las matrices unidimensionales $\\mathbf{A} \\triangleq \\{a(k,m)\\}$ y $\\mathbf{B} \\triangleq \\{b(l,n)\\}$ deben ser matrices unitarias por sí mismas, es decir:
+
+
+
+&#x09;	$$\\mathbf{A}\\mathbf{A}^{\*T} = \\mathbf{A}^T\\mathbf{A}^\* = \\mathbf{I}$$
+
+
+
+Si $\\mathbf{A}$ y $\\mathbf{B}$ son unitarias individualmente, sus vectores fila/columna ya son ortonormales y completos en 1D, lo cual garantiza automáticamente que el producto en 2D también lo sea.
+
+
+
+Por lo general, se elige la misma matriz de transformación para ambas dimensiones ($\\mathbf{B} = \\mathbf{A}$), lo que permite calcular la transformada 2D mediante una simple multiplicación de matrices ($\\mathbf{V} = \\mathbf{A}\\mathbf{U}\\mathbf{A}^T$).
+
+
+
+#### 6.1 Imagen cuadrada ($N \\times N$):
+
+* **Transformada directa:**
+
+
+
+&#x09;	$$v(k,l) = \\sum\_{m,n=0}^{N-1} a(k,m) u(m,n) a(l,n) \\iff \\mathbf{V} = \\mathbf{A}\\mathbf{U}\\mathbf{A}^T$$
+
+
+
+* **Transformada inversa:**
+
+
+&#x09;	$$u(m,n) = \\sum\_{k,l=0}^{N-1} a^\*(k,m) v(k,l) a^\*(l,n) \\iff \\mathbf{U} = \\mathbf{A}^{\*T}\\mathbf{V}\\mathbf{A}^\*$$
+
+
+
+#### 6.2 Imagen rectangular ($M \\times N$):
+
+Se usan dos matrices unitarias de distinto tamaño ($\\mathbf{A}\_M$ de $M\\times M$ y $\\mathbf{A}\_N$ de $N\\times N$): $\\mathbf{V} = \\mathbf{A}\_M \\mathbf{U} \\mathbf{A}\_N$ (5.13) y su inversa $\\mathbf{U} = \\mathbf{A}\_M^{\*T} \\mathbf{V} \\mathbf{A}\_N^{\*T}$.
+
+* **Transformada directa:**
+
+
+
+&#x09;	$$\\mathbf{V} = \\mathbf{A}\_M \\mathbf{U} \\mathbf{A}\_N$$
+
+
+
+* **Transformada inversa**
+
+
+
+&#x09;	$$\\mathbf{U} = \\mathbf{A}\_M^{\*T} \\mathbf{V} \\mathbf{A}\_N^{\*T}$$
+
+
+
+**Calculo:**
+
+Al reescribir la directa como $\\mathbf{V}^T = \\mathbf{A}\[\\mathbf{A}\\mathbf{U}]^T$, se demuestra que una transformada 2D se ejecuta aplicando primero la transformada 1D a cada columna de $\\mathbf{U}$ ($\\mathbf{A}\\mathbf{U}$) y luego aplicando la transformada 1D a cada fila del resultado para obtener $\\mathbf{V}$.
+
+
+
+&#x09;	$$\\mathbf{V}^T = \\mathbf{A}\[\\mathbf{A}\\mathbf{U}]^T$$
+
+
+
+
+
+Para una transformación bidimensional separable, las matrices base fundamentales se construyen a partir de los vectores base unidimensionales $\\mathbf{a}\_k^\*$ (correspondientes a las columnas de $\\mathbf{A}^{\*T}$). Mediante el producto exterior de estos vectores se define el conjunto completo de $N^2$ imágenes base ($\\mathbf{A}\_{k,l}^\*$) de dimensión $N \\times N$:  
+
+
+
+&#x09;	$$\\mathbf{A}\_{k,l}^\* = \\mathbf{a}\_k^\* \\mathbf{a}\_l^{\*T}$$
+
+
+
+Con el fin de establecer una representación en serie para una imagen $\\mathbf{U}$, se define el producto interno matricial entre dos arreglos $\\mathbf{F}$ y $\\mathbf{G}$ de tamaño $N \\times N$ como:
+
+
+
+&#x09;	$$\\langle \\mathbf{F}, \\mathbf{G} \\rangle = \\sum\_{m=0}^{N-1} \\sum\_{n=0}^{N-1} f(m,n) g^\*(m,n)$$
+
+
+
+A partir de este operador, cualquier imagen $\\mathbf{U}$ puede expresarse como una combinación lineal ponderada de las $N^2$ imágenes base ortonormales:   
+
+
+
+&#x09;	$$\\mathbf{U} = \\sum\_{k,l=0}^{N-1} v(k,l) \\mathbf{A}\_{k,l}^\*$$
+
+
+
+En esta expansión, cada coeficiente de la transformada $v(k,l)$ representa geométricamente la proyección de la imagen original $\\mathbf{U}$ sobre la $(k,l)$-ésima imagen base, calculada mediante su producto interno:
+
+
+
+&#x09;	$$v(k,l) = \\langle \\mathbf{U}, \\mathbf{A}\_{k,l}^\* \\rangle$$
+
+
+
+Adicionalmente, si las matrices $\\mathbf{U}$ y $\\mathbf{V}$ se reordenan por filas en vectores unidimensionales $\\mathbf{u}$ y $\\mathbf{v}$ de dimensión $N^2 \\times 1$, el par de transformadas bidimensionales adopta una formulación lineal compacta utilizando el producto de Kronecker ($\\otimes$):
+
+
+
+&#x09;	$$\\mathbf{v} = (\\mathbf{A} \\otimes \\mathbf{A})\\mathbf{u} \\triangleq \\mathcal{A}\\mathbf{u}$$
+
+
+
+&#x09;	$$\\mathbf{u} = (\\mathbf{A} \\otimes \\mathbf{A})^{\*T}\\mathbf{v} = \\mathcal{A}^{\*T}\\mathbf{v}$$
+
+
+
+Donde $\\mathcal{A} \\triangleq \\mathbf{A} \\otimes \\mathbf{A}$ representa el operador unitario global en el espacio vectorial de dimensión $N^2$.
+
+
+
+#### 6.3 Separabilidad mediante Producto de Kronecker
+
+Una transformación lineal arbitraria $\\boldsymbol{y} = \\mathcal{A}\\boldsymbol{x}$ (5.23) se denomina separable si su matriz $\\mathcal{A}$ (de tamaño $N^2 \\times N^2$) puede descomponerse como el producto de Kronecker de dos matrices más pequeñas ($\\mathbf{A}\_1$ y $\\mathbf{A}\_2$ de tamaño $N \\times N$):
+
+
+
+&#x09;	$$\\mathcal{A} = \\mathbf{A}\_1 \\otimes \\mathbf{A}\_2$$
+
+
+
+Esto permite reducir el cálculo vectorial a una transformación bidimensional matricial mucho más eficiente:
+
+
+
+&#x09;	$$\\mathbf{Y} = \\mathbf{A}\_1 \\mathbf{X} \\mathbf{A}\_2^T$$
+
+
+
+Donde $\\mathbf{X}$ y $\\mathbf{Y}$ son las matrices que al ordenarse por filas forman los vectores $\\boldsymbol{x}$ y $\\boldsymbol{y}$).
+
+
+
+**Dimensionalidad y Transformadas Rápidas**
+
+Los $2N^3$ cálculos necesarios para obtener $\\mathbf{V}$ se pueden reducir aún más utilizando transformadas rápidas (fast transforms), cuya matriz $\\mathbf{A}$ se factoriza en un producto de $p$ matrices dispersas (con muy pocos elementos distintos de cero, $r \\ll N$):
+
+
+
+&#x09;	$$\\mathbf{A} = \\mathbf{A}\_{(1)} \\mathbf{A}\_{(2)} \\dots \\mathbf{A}\_{(p)}$$
+
+
+
+Esto reduce las operaciones de una multiplicación $\\mathbf{y} = \\mathbf{A}\\mathbf{x}$ a $rpN$. Para transformadas como la DCT (coseno), Fourier, seno, Hadamard y Slant, donde $p = \\log\_2 N$, la complejidad baja al orden de $N \\log\_2 N$ (o $N^2 \\log\_2 N$ para imágenes de $N \\times N$).
+
+
+
+**Frecuencia de Transformada (Transform Frequency):**
+
+En cualquier transformada unitaria $\\mathbf{y} = \\mathbf{A}\\mathbf{x}$, el concepto de frecuencia se generaliza contando el número de cruces por cero de las filas (funciones base) de la matriz $\\mathbf{A}$.
+
+Si las filas de $\\mathbf{A}$ se ordenan de forma que los cruces por cero aumenten con el número de fila, los coeficientes resultantes $y(k)$ quedan ordenados según su número de onda o frecuencia de transformada creciente (por ejemplo, frecuencia del coseno).
+
+Es un concepto relativo a cada transformada: un término de baja frecuencia en una transformada puede contener armónicos de alta frecuencia de otra.
+
+
+**La Transformada Óptima (The Optimum Transform):**
+
+Para evaluar el rendimiento en filtrado y compresión de datos según el criterio del error cuadrático medio (MSE).
+
+
+
+#### 6.3 Las propiedades de las transformaciones unitarias - conservación de la energía y rotación
+
+**Conservación de la Energía (1D):**
+
+Una transformación unitaria $\\mathbf{v} = \\mathbf{A}\\mathbf{u}$ conserva intacta la energía de la señal (la norma al cuadrado o longitud del vector $\\mathbf{u}$ en el espacio $N$-dimensional):
+
+
+
+&#x09;	$$\\Vert{}\\mathbf{v}\\Vert{}^2 = \\Vert{}\\mathbf{u}\\Vert{}^2$$
+
+
+
+dado que $\\mathbf{A}^{\*T}\\mathbf{A} = \\mathbf{I}$)
+
+
+
+**Interpretación Geométrica (Rotación):**
+
+Al no alterar la longitud del vector, toda transformación unitaria equivale simplemente a una rotación del vector $\\mathbf{u}$ en el espacio $N$-dimensional (o de forma equivalente, una rotación de los ejes coordenados base, donde las componentes de $\\mathbf{v}$ son las proyecciones de $\\mathbf{u}$ sobre la nueva base).
+
+
+
+**Conservación de la Energía en 2D:**
+
+
+
+La misma propiedad se cumple para imágenes bidimensionales: la suma de las energías de los píxeles en el dominio espacial es exactamente igual a la suma de las energías de los coeficientes en el dominio de la transformada:
+
+
+
+&#x09;	$$\\sum\_{m,n=0}^{N-1} \\vert{}u(m,n)\\vert{}^2 = \\sum\_{k,l=0}^{N-1} \\vert{}v(k,l)\\vert{}^2$$
+
+
+
+#### 6.4. Transformación del Coseno $\\mathbf{C}$
+
+Los elementos $c(k,n)$ de la matriz de la Transformada Discreta del Coseno (DCT) de dimensión $N \\times N$ se definen como:
+
+
+
+$$c(k,n) = \\begin{cases} \\dfrac{1}{\\sqrt{N}}, \& k = 0, \\quad 0 \\le n \\le N-1 \\\\ \\sqrt{\\dfrac{2}{N}} \\cos \\dfrac{\\pi(2n+1)k}{2N}, \& 1 \\le k \\le N-1, \\quad 0 \\le n \\le N-1 \\end{cases}$$
+
+
+
+**Definición de la DCT Unidimensional:** Para una secuencia $\\{u(n), \\, 0 \\le n \\le N-1\\}$, su DCT directa en 1D se calcula mediante:
+
+
+
+&#x09;	$$v(k) = \\alpha(k) \\sum\_{n=0}^{N-1} u(n) \\cos\\left\[\\frac{\\pi(2n+1)k}{2N}\\right], \\quad 0 \\le k \\le N-1$$
+
+
+
+Donde el factor de normalización $\\alpha(k)$ garantiza la ortonormalidad de la transformación:
+
+
+
+$$\\alpha(0) \\triangleq \\sqrt{\\frac{1}{N}}, \\qquad \\alpha(k) \\triangleq \\sqrt{\\frac{2}{N}} \\quad \\text{para } 1 \\le k \\le N-1$$
+
+
+
+**Transformada Inversa del Coseno en 1D**
+
+La secuencia original $u(n)$ se reconstruye a partir de los coeficientes $v(k)$ mediante:
+
+
+
+&#x09;	$$u(n) = \\sum\_{k=0}^{N-1} \\alpha(k) v(k) \\cos\\left\[\\frac{\\pi(2n+1)k}{2N}\\right], \\quad 0 \\le n \\le N-1$$
+
+
+
+**Par de Transformadas del Coseno en 2D:**
+
+Dado que la matriz $\\mathbf{C}$ es real y ortogonal ($\\mathbf{A} = \\mathbf{A}^\* = \\mathbf{C}$), el par de transformadas 2D se obtiene sustituyendo directamente $\\mathbf{C}$ en las ecuaciones matriciales separables.
+
+
+
+**Directa: $\\mathbf{V} = \\mathbf{C}\\mathbf{U}\\mathbf{C}^T$**
+
+**Inversa: $\\mathbf{U} = \\mathbf{C}^T\\mathbf{V}\\mathbf{C}$**
+
+
+
+**Propiedades:**
+
+* La matriz de la transformada del coseno $\\mathbf{C}$ está compuesta únicamente por números reales ($\\mathbf{C} = \\mathbf{C}^\*$) y es ortogonal, por lo que su inversa es simplemente su matriz transpuesta (sin necesidad de conjugación compleja):
+
+
+
+&#x09;	$$\\mathbf{C} = \\mathbf{C}^\* \\implies \\mathbf{C}^{-1} = \\mathbf{C}^T$$
+
+
+
+* La DCT no es la parte real de la Transformada Discreta de Fourier (DFT) unitaria $\\mathbf{F}$. Sin embargo, la DCT de una secuencia sí está directamente relacionada con la DFT de su extensión simétrica.
+
+
+
+**Reconstrucción de la Imagen (DCT Inversa):**
+
+Para recuperar la imagen aproximada en el dominio espacial, se aplica la transformada inversa aprovechando que la matriz es ortogonal ($\\mathbf{C}^{-1} = \\mathbf{C}^T$):
+
+
+
+&#x09;	$$\\mathbf{U} = \\mathbf{C}^T\\mathbf{V}\\mathbf{C}$$
+
+
+
+Esto equivale a reconstruir la imagen como una suma ponderada únicamente de las imágenes base más representativas ($\\mathbf{U} = \\sum v(k,l)\\mathbf{A}\_{k,l}^\*$).
+
+
+
+**Criterio del Error Cuadrático Medio (MSE) y Relación Señal a Ruido (SNR)**
+
+Para evaluar cuantitativamente la fidelidad de una imagen reconstruida $u'(m,n)$ respecto a la imagen original $u(m,n)$ de dimensiones $M \\times N$ tras un proceso de compresión, se emplea el criterio del error cuadrático medio.
+
+
+
+Desde un enfoque estadístico, el error cuadrático medio (mean square error, $\\sigma\_{ms}^2$) se define mediante la esperanza matemática de la diferencia cuadrática entre ambas imágenes:
+
+
+
+&#x09;	$$\\sigma\_{ms}^2 \\triangleq E\\left\[\\vert{}u(m,n) - u'(m,n)\\vert{}^2\\right]$$
+
+
+
+Asimismo, el error cuadrático medio promedio ($\\sigma\_a^2$) sobre toda la extensión espacial de la imagen está dado por:
+
+
+
+&#x09;	$$\\sigma\_a^2 = \\frac{1}{MN} \\sum\_{m=1}^{M} \\sum\_{n=1}^{N} E\\left\[\\vert{}u(m,n) - u'(m,n)\\vert{}^2\\right]$$
+
+
+
+En aplicaciones prácticas, cuando no se dispone del conjunto estadístico completo, se utiliza el error cuadrático promedio (average least squares error, $\\sigma\_{ls}^2$) como estimador directo:
+
+
+
+&#x09;	$$\\sigma\_{ls}^2 \\triangleq \\frac{1}{MN} \\sum\_{m=1}^{M} \\sum\_{n=1}^{N} \\vert{}u(m,n) - u'(m,n)\\vert{}^2$$
+
+
+
+En virtud de la propiedad de conservación de energía de las transformadas unitarias (teorema de Parseval), el error cuadrático evaluado en el dominio espacial es exactamente equivalente al error cuadrático calculado entre los coeficientes en el dominio de la transformada.
+
+
+
+En el ámbito del procesamiento y codificación de imágenes, el error cuadrático medio ($\\sigma\_e^2$, donde $\\sigma\_e$ representa a $\\sigma\_a$, $\\sigma\_{ms}$ o $\\sigma\_{ls}$) suele expresarse en decibelios ($\\text{dB}$) mediante la Relación Señal a Ruido ($\\text{SNR}$).
+
+
+
+&#x09;	$$\\text{SNR} = 10 \\log\_{10} \\frac{\\sigma^2}{\\sigma\_e^2}$$
+
+
+
+donde $\\sigma^2$ corresponde a la varianza de la imagen original de referencia.
+
+
+
+De manera alternativa, en aplicaciones específicas de compresión y codificación de imágenes se emplea la Relación Señal a Ruido Pico ($\\text{SNR}'$ o $\\text{PSNR}$), la cual normaliza el error respecto al cuadrado del valor pico a pico máximo de la imagen de referencia:
+
+
+
+&#x09;	$$\\text{SNR}' = 10 \\log\_{10} \\frac{(\\text{valor pico a pico de la imagen de referencia})^2}{\\sigma\_e^2}$$
+
+
+
+
+
 ## **7. Referencias y Bibliografía**
 
 **\[1]** V. Britanak, P. C. Yip, and K. R. Rao, Discrete Cosine and Sine Transforms: General Properties, Fast Algorithms and Integer Approximations. Oxford, U.K.: Academic Press, 2007
+
+**\[2]** A. K. Jain, Fundamentals of Digital Image Processing. Englewood Cliffs, NJ, USA: Prentice-Hall, 1989.
 
 
 
