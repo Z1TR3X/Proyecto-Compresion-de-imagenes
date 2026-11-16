@@ -660,6 +660,60 @@ Dado que la matriz $\\mathbf{C}$ es real y ortogonal ($\\mathbf{A} = \\mathbf{A}
 
 
 
+La DCT bidimensional de una matriz para una imagen $u(m, n)$ de tamaño $M \\times N$ (con $0 \\le m \\le M-1$ y $0 \\le n \\le N-1$), los coeficientes transformados $v(k, l)$ se definen mediante:
+
+
+
+&#x09;	$$v(k, l) = \\alpha\_M(k)\\,\\alpha\_N(l) \\sum\_{m=0}^{M-1} \\sum\_{n=0}^{N-1} u(m, n) \\cos\\left\[\\frac{\\pi(2m + 1)k}{2M}\\right] \\cos\\left\[\\frac{\\pi(2n + 1)l}{2N}\\right]$$
+
+
+
+para $0 \\le k \\le M - 1$ y $0 \\le l \\le N - 1$.
+
+
+
+donde los factores de normalización independientes para cada eje son:
+
+
+
+$$\\alpha\_M(k) = \\begin{cases} \\sqrt{\\frac{1}{M}}, \& k = 0 \\\\ \\sqrt{\\frac{2}{M}}, \& 1 \\le k \\le M - 1 \\end{cases} \\qquad \\text{y} \\qquad \\alpha\_N(l) = \\begin{cases} \\sqrt{\\frac{1}{N}}, \& l = 0 \\\\ \\sqrt{\\frac{2}{N}}, \& 1 \\le l \\le N - 1 \\end{cases}$$
+
+
+
+
+
+&#x20;**Equivalencia Exacta con la Forma Matricial ($\\mathbf{V} = \\mathbf{C}\_M \\mathbf{U} \\mathbf{C}\_N^T$)**
+
+
+
+Al separar las variables verticales (índice $m$, dimensión $M$) y horizontales (índice $n$, dimensión $N$), se definen dos matrices ortogonales distintas:
+
+
+
+&#x09;	$\\mathbf{C}\_M \\in \\mathbb{R}^{M \\times M}$, con elementos $C\_M(k, m) = \\alpha\_M(k)\\cos\\left\[\\frac{\\pi(2m+1)k}{2M}\\right]$
+
+
+
+&#x09;	$\\mathbf{C}\_N \\in \\mathbb{R}^{N \\times N}$, con elementos $C\_N(l, n) = \\alpha\_N(l)\\cos\\left\[\\frac{\\pi(2n+1)l}{2N}\\right]$
+
+
+
+Gracias a la separabilidad del núcleo, la doble sumatoria se factoriza exactamente en el producto matricial:
+
+
+
+&#x09;	$$v(k, l) = \\sum\_{m=0}^{M-1} C\_M(k, m) \\left( \\sum\_{n=0}^{N-1} u(m, n) C\_N(l, n) \\right) = \\left(\\mathbf{C}\_M \\mathbf{U} \\mathbf{C}\_N^T\\right)\_{k,l}$$
+
+
+
+De modo que la transformación directa y su inversa quedan expresadas en forma compacta como:
+
+
+
+&#x09;	$$\\mathbf{V} = \\mathbf{C}\_M \\mathbf{U} \\mathbf{C}\_N^T \\qquad \\text{y} \\qquad \\mathbf{U} = \\mathbf{C}\_M^T \\mathbf{V} \\mathbf{C}\_N$$
+
+
+
 **Reconstrucción de la Imagen (DCT Inversa):**
 
 Para recuperar la imagen aproximada en el dominio espacial, se aplica la transformada inversa aprovechando que la matriz es ortogonal ($\\mathbf{C}^{-1} = \\mathbf{C}^T$):
