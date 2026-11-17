@@ -202,13 +202,11 @@ En forma esquemática, cada fila de detalle tiene la estructura:
 
 ```math
 h_{r,k}[n]=
-\left\{
-\begin{array}{ll}
-\frac{1}{\sqrt{L}}, & kL\leq n<kL+\frac{L}{2}, \\
--\frac{1}{\sqrt{L}}, & kL+\frac{L}{2}\leq n<(k+1)L, \\
+\begin{cases}
+\frac{1}{\sqrt{L}}, & kL\leq n<kL+\frac{L}{2}, \cr
+-\frac{1}{\sqrt{L}}, & kL+\frac{L}{2}\leq n<(k+1)L, \cr
 0, & \text{en otro caso},
-\end{array}
-\right.
+\end{cases}
 ```
 
 donde $L=2^r$, $k$ identifica el bloque y $n$ identifica la posición de
