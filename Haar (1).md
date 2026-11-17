@@ -200,14 +200,16 @@ soportes se desplazan en bloques no superpuestos de longitud $L$.
 
 En forma esquemática, cada fila de detalle tiene la estructura:
 
-```math
-h_{r,k}[n]=
+
+$$
+h_{r,k}[n] =
 \begin{cases}
-\frac{1}{\sqrt{L}}, & kL\leq n<kL+\frac{L}{2}, \cr
--\frac{1}{\sqrt{L}}, & kL+\frac{L}{2}\leq n<(k+1)L, \cr
-0, & \text{en otro caso},
+\frac{1}{\sqrt{L}}, & kL \leq n < kL+\frac{L}{2}, \\[6pt]
+-\frac{1}{\sqrt{L}}, & kL+\frac{L}{2} \leq n < (k+1)L, \\[6pt]
+0, & \text{en otro caso}.
 \end{cases}
-```
+$$
+
 
 donde $L=2^r$, $k$ identifica el bloque y $n$ identifica la posición de
 la señal. La fila se normaliza con $1/\sqrt{L}$, de modo que su
