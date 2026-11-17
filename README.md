@@ -44,8 +44,6 @@ Los dos archivos siguen los mismos pasos, cada uno con su base: la DCT [1], [2] 
 
 [3] S. G. Mallat, "A theory for multiresolution signal decomposition: The wavelet representation," *IEEE Transactions on Pattern Analysis and Machine Intelligence*, vol. 11, no. 7, pp. 674–693, jul. 1989, doi: 10.1109/34.192463.
 
-[4] O. Velásquez Castañón, "Compresión de imágenes mediante bases ortogonales: Fourier, cosenos, Haar y Walsh–Hadamard; extensión a video," material de referencia, Álgebra Lineal Aplicada 2026-2, Universidad del Pacífico, Lima, oct. 2026.
-
 [5] SciPy, "Discrete Fourier transforms (scipy.fft)," documentación técnica. [En línea]. Disponible: https://docs.scipy.org/doc/scipy/reference/fft.html. [Accedido: 1 nov. 2026].
 
 ## Declaración de uso de IA

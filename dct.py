@@ -4,8 +4,8 @@ dct.py  -  Compresión de imágenes con la DCT global (base ortonormal).
 Qué hace:
   1. Conserva 1, 5, 10 y 25 % de los coeficientes y muestra las reconstrucciones.
   2. Compara dos reglas: soporte PREFIJADO (frecuencias bajas) y selección por MAGNITUD.
-  3. Calcula error relativo, MSE, PSNR y energía retenida (antes de cuantizar).
-  4. Cuantiza los coeficientes y estima los bits (valores + posiciones + cabecera).
+  3. Cuantiza los coeficientes y estima los bits (valores + posiciones + cabecera).
+  4. Reporta el error de recuperación, la tasa de compresión y el tamaño comprimido.
 
 Ejecutar:  python dct.py
 Lee las imágenes de la carpeta  imagenes/  y guarda todo en  resultados/
@@ -21,7 +21,6 @@ from scipy.fft import dctn, idctn
 TAM = 256                       # tamaño de trabajo: 256 x 256
 PORCENTAJES = [1, 5, 10, 25]    # % de coeficientes que se conservan
 DELTA = 0.05                    # paso de cuantización
-IMAGEN = ""                     # "" = usa todas las imágenes de imagenes/; o pon un nombre, ej. "radiografia.png"
 
 
 # ---------- 1. Cargar imagen: gris, cuadrada, 256x256, valores en [0, 1] ----------
@@ -69,12 +68,10 @@ def seleccion_prefijada(C, k):
     return M.reshape(C.shape)
 
 
-# ---------- 4. Métricas y bits ----------
-def metricas(A, A_rec):
-    mse = np.mean((A - A_rec) ** 2)
-    error_rel = np.linalg.norm(A - A_rec) / np.linalg.norm(A)
-    psnr = np.inf if mse == 0 else 10 * np.log10(1 / mse)
-    return error_rel, mse, psnr
+# ---------- 4. Error de recuperación y bits ----------
+def error_recuperacion(A, A_rec):
+    """||A - A_rec||_F / ||A||_F"""
+    return np.linalg.norm(A - A_rec) / np.linalg.norm(A)
 
 
 def bits_estimados(q, M, regla):
@@ -97,18 +94,14 @@ print("  dctn(X) = D X D^T  (8x8)    ->", np.allclose(transformar(X), D8 @ X @ D
 os.makedirs("resultados", exist_ok=True)
 EXTENSIONES = (".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff")
 rutas = sorted(r for r in glob.glob("imagenes/*") if r.lower().endswith(EXTENSIONES))
-if IMAGEN:
-    rutas = [os.path.join("imagenes", IMAGEN)]     # solo la imagen elegida
 
 for ruta in rutas:
     nombre = os.path.splitext(os.path.basename(ruta))[0]
     A = cargar_imagen(ruta)
     C = transformar(A)
     print(f"\nImagen: {nombre}")
-    print("  reconstrucción exacta     ->", np.allclose(reconstruir(C), A))
-    print("  Parseval ||A||² = ||C||²  ->", np.isclose(np.sum(A**2), np.sum(C**2)))
-    print(f"  Tamaño sin comprimir: {A.size * 8 / 8 / 1024:.1f} KB  (8 bits por píxel)")
-    print(f"  {'regla':<10}{'%':>4}{'err_rel':>10}{'PSNR':>9}{'energía':>10}{'err=desc':>10}{'PSNR_q':>9}{'bpp':>7}{'KB':>8}")
+    print(f"  Imagen reescalada: {A.shape[0]} x {A.shape[1]} píxeles = {A.size / 1024:.1f} KB sin comprimir  (8 bits por píxel)")
+    print(f"  {'regla':<10}{'% coef':>7}{'error de recuperación':>24}{'tasa de compresión':>21}{'tamaño comprimido':>20}")
 
     fig, ejes = plt.subplots(2, 5, figsize=(16, 7))
     for f, (regla, seleccionar) in enumerate([("prefijada", seleccion_prefijada), ("magnitud", seleccion_magnitud)]):
@@ -119,24 +112,20 @@ for ruta in rutas:
         for c, p in enumerate(PORCENTAJES):
             k = round(A.size * p / 100)
             M = seleccionar(C, k)
-            A_rec = reconstruir(C * M)
-
-            # Métricas antes de cuantizar
-            error_rel, mse, psnr = metricas(A, A_rec)
-            energia = np.sum(C[M] ** 2) / np.sum(C ** 2)
-            err_igual_desc = np.isclose(np.sum((A - A_rec) ** 2), np.sum(C[~M] ** 2))
 
             # Cuantización: q = round(c / Delta),  c_hat = Delta * q
             q = np.round(C / DELTA) * M
-            _, _, psnr_q = metricas(A, reconstruir(DELTA * q))
+            A_rec = reconstruir(DELTA * q)                    # imagen recuperada a partir de lo que se guarda
+
+            error_rel = error_recuperacion(A, A_rec)
             bits = bits_estimados(q, M, regla)
-            bpp = bits / A.size                               # bits por píxel (sin comprimir = 8)
+            tasa = A.size * 8 / bits                          # tasa de compresión: bits originales / bits comprimidos
             kb = bits / 8 / 1024                              # tamaño estimado comprimido en KB
 
-            print(f"  {regla:<10}{p:>4}{error_rel:>10.4f}{psnr:>9.2f}{energia:>10.5f}{str(err_igual_desc):>10}{psnr_q:>9.2f}{bpp:>7.3f}{kb:>8.1f}")
+            print(f"  {regla:<10}{p:>7}{error_rel:>24.2%}{tasa:>19.1f}:1{kb:>17.1f} KB")
 
             ejes[f, c + 1].imshow(np.clip(A_rec, 0, 1), cmap="gray", vmin=0, vmax=1)   # misma escala
-            ejes[f, c + 1].set_title(f"{p}%  PSNR={psnr:.1f} dB")
+            ejes[f, c + 1].set_title(f"{p}%  error={error_rel:.1%}  tasa={tasa:.1f}:1")
 
     for ax in ejes.ravel():
         ax.set_xticks([]); ax.set_yticks([])
