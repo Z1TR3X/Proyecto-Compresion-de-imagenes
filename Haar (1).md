@@ -1,8 +1,4 @@
 # Desarrollo matemático de la Transformada de Haar
-
-**Proyecto:** Comparación de la DCT-II y la Transformada de Haar
-ortonormal para la representación de imágenes en escala de grises.
-
 ## 1. Fundamento matemático de la Transformada de Haar
 
 La Transformada de Haar es una transformada wavelet ortonormal que
@@ -205,7 +201,12 @@ soportes se desplazan en bloques no superpuestos de longitud $L$.
 En forma esquemática, cada fila de detalle tiene la estructura:
 
 ```math
-h_{r,k}[n]= \begin{cases} \frac{1}{\sqrt{L}}, & kL\leq n<kL+\frac{L}{2},\\ -\frac{1}{\sqrt{L}}, & kL+\frac{L}{2}\leq n<(k+1)L,\\ 0, & \text{en otro caso}, \end{cases}
+h_{r,k}[n]=
+\begin{cases}
+\frac{1}{\sqrt{L}}, & kL\leq n<kL+\frac{L}{2},\\
+-\frac{1}{\sqrt{L}}, & kL+\frac{L}{2}\leq n<(k+1)L,\\
+0, & \text{en otro caso},
+\end{cases}
 ```
 
 donde $L=2^r$, $k$ identifica el bloque y $n$ identifica la posición de
