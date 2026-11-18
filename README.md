@@ -2,7 +2,6 @@
 
 **Curso:** Álgebra Lineal Aplicada 2026-2 — Universidad del Pacífico
 **Tema:** Compresión de imágenes mediante bases ortogonales
-**Video:** [Ver video](https://drive.google.com/drive/folders/1949UsEJW-8gNVBSwZbvh5TFSar30c8Aw?usp=sharing)
 
 ## Integrantes
 - Kevin Paolo Julca Lucano
