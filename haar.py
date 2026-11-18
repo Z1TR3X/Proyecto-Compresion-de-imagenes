@@ -1,0 +1,160 @@
+"""
+haar.py  -  Compresión de imágenes con Haar ortonormal multinivel.
+
+Qué hace:
+  1. Conserva 1, 5, 10 y 25 % de los coeficientes y muestra las reconstrucciones.
+  2. Compara dos reglas: soporte PREFIJADO (niveles gruesos) y selección por MAGNITUD.
+  3. Calcula error relativo, MSE, PSNR y energía retenida (antes de cuantizar).
+  4. Cuantiza los coeficientes y estima los bits (valores + posiciones + cabecera).
+
+Ejecutar:  python haar.py
+Lee las imágenes de la carpeta  imagenes/  y guarda todo en  resultados/
+"""
+import os, glob
+import numpy as np
+import matplotlib
+matplotlib.use("Agg")                       # guarda las figuras sin abrir ventanas
+import matplotlib.pyplot as plt
+from PIL import Image
+import pywt                                 # PyWavelets: transformada de Haar rápida
+
+TAM = 256                       # tamaño de trabajo: 256 x 256 (potencia de 2)
+PORCENTAJES = [1, 5, 10, 25]    # % de coeficientes que se conservan
+DELTA = 0.05                    # paso de cuantización
+IMAGEN = ""                     # "" = usa todas las imágenes de imagenes/; o pon un nombre, ej. "radiografia.png"
+
+
+# ---------- 1. Cargar imagen: gris, cuadrada, 256x256, valores en [0, 1] ----------
+def cargar_imagen(ruta):
+    img = Image.open(ruta).convert("L")
+    w, h = img.size
+    lado = min(w, h)
+    img = img.crop(((w - lado) // 2, (h - lado) // 2, (w + lado) // 2, (h + lado) // 2))
+    img = img.resize((TAM, TAM), Image.LANCZOS)
+    return np.asarray(img, dtype=float) / 255.0
+
+
+# ---------- 2. Haar ortonormal multinivel ----------
+# Matriz de una etapa: solo se usa para VERIFICAR con una matriz pequeña (sección 6, paso 2 del documento)
+def matriz_haar(N):
+    """Primeras N/2 filas: promedios (x1 + x2)/sqrt(2).  Últimas N/2: diferencias (x1 - x2)/sqrt(2)."""
+    H = np.zeros((N, N))
+    for i in range(N // 2):
+        H[i, 2*i] = H[i, 2*i + 1] = 1 / np.sqrt(2)
+        H[N//2 + i, 2*i], H[N//2 + i, 2*i + 1] = 1 / np.sqrt(2), -1 / np.sqrt(2)
+    return H
+
+
+# Transformada de PyWavelets (todos los niveles; "periodization" = sin relleno, ortonormal)
+def transformar(A):
+    C, _ = pywt.coeffs_to_array(pywt.wavedec2(A, "haar", mode="periodization"))
+    return C                                   # matriz: aproximación arriba a la izquierda, detalles alrededor
+
+
+def reconstruir(C):
+    _, cortes = pywt.coeffs_to_array(pywt.wavedec2(np.zeros(C.shape), "haar", mode="periodization"))
+    coef = pywt.array_to_coeffs(C, cortes, output_format="wavedec2")
+    return pywt.waverec2(coef, "haar", mode="periodization")
+
+
+# ---------- 3. Reglas de selección (devuelven una máscara: True = se conserva) ----------
+def seleccion_magnitud(C, k):
+    """Los k coeficientes de mayor |c|."""
+    orden = np.argsort(np.abs(C).ravel())[-k:]     # posiciones de los k más grandes
+    M = np.zeros(C.size, dtype=bool)
+    M[orden] = True
+    return M.reshape(C.shape)
+
+
+def seleccion_prefijada(C, k):
+    """Niveles de lo más grueso a lo más fino: primero la aproximación, luego las subbandas
+       de detalle de cada nivel. El cuadrado de lado 2^L contiene exactamente la aproximación
+       y las subbandas (horizontal, vertical, diagonal) de los niveles más gruesos.
+       Se llenan cuadrados crecientes; el último nivel puede quedar incompleto.
+       Las posiciones no dependen de la imagen."""
+    i, j = np.indices(C.shape)
+    orden = np.lexsort(((i + j).ravel(), np.maximum(i, j).ravel()))[:k]
+    M = np.zeros(C.size, dtype=bool)
+    M[orden] = True
+    return M.reshape(C.shape)
+
+
+# ---------- 4. Métricas y bits ----------
+def metricas(A, A_rec):
+    mse = np.mean((A - A_rec) ** 2)
+    error_rel = np.linalg.norm(A - A_rec) / np.linalg.norm(A)
+    psnr = np.inf if mse == 0 else 10 * np.log10(1 / mse)
+    return error_rel, mse, psnr
+
+
+def bits_estimados(q, M, regla):
+    """cabecera (64) + valores (k enteros) + posiciones (solo si la regla es por magnitud)."""
+    k = int(M.sum())
+    bits_por_valor = int(np.ceil(np.log2(np.abs(q[M]).max() + 1))) + 1   # +1 por el signo
+    bits_posiciones = k * int(np.log2(q.size)) if regla == "magnitud" else 0   # bits de una posición (16 en 256x256)
+    return 64 + k * bits_por_valor + bits_posiciones
+
+
+# ---------- 5. Verificaciones ----------
+print("Verificaciones Haar")
+H8 = matriz_haar(8)
+print("  H H^T = I                       ->", np.allclose(H8 @ H8.T, np.eye(8)))
+
+
+# ---------- 6. Experimento ----------
+os.makedirs("resultados", exist_ok=True)
+EXTENSIONES = (".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff")
+rutas = sorted(r for r in glob.glob("imagenes/*") if r.lower().endswith(EXTENSIONES))
+if IMAGEN:
+    rutas = [os.path.join("imagenes", IMAGEN)]     # solo la imagen elegida
+
+for ruta in rutas:
+    nombre = os.path.splitext(os.path.basename(ruta))[0]
+    A = cargar_imagen(ruta)
+    C = transformar(A)
+    print(f"\nImagen: {nombre}")
+    print("  reconstrucción exacta     ->", np.allclose(reconstruir(C), A))
+    print("  Parseval ||A||² = ||C||²  ->", np.isclose(np.sum(A**2), np.sum(C**2)))
+    print(f"  Tamaño sin comprimir: {A.size * 8 / 8 / 1024:.1f} KB  (8 bits por píxel)")
+    print(f"  {'regla':<10}{'%':>4}{'err_rel':>10}{'PSNR':>9}{'energía':>10}{'err=desc':>10}{'PSNR_q':>9}{'bpp':>7}{'KB':>8}")
+
+    fig, ejes = plt.subplots(2, 5, figsize=(16, 7))
+    for f, (regla, seleccionar) in enumerate([("prefijada", seleccion_prefijada), ("magnitud", seleccion_magnitud)]):
+        ejes[f, 0].imshow(A, cmap="gray", vmin=0, vmax=1)
+        ejes[f, 0].set_title("Original")
+        ejes[f, 0].set_ylabel(regla, fontsize=12)
+
+        for c, p in enumerate(PORCENTAJES):
+            k = round(A.size * p / 100)
+            M = seleccionar(C, k)
+            A_rec = reconstruir(C * M)
+
+            # Métricas antes de cuantizar
+            error_rel, mse, psnr = metricas(A, A_rec)
+            energia = np.sum(C[M] ** 2) / np.sum(C ** 2)
+            err_igual_desc = np.isclose(np.sum((A - A_rec) ** 2), np.sum(C[~M] ** 2))
+
+            # Cuantización: q = round(c / Delta),  c_hat = Delta * q
+            q = np.round(C / DELTA) * M
+            _, _, psnr_q = metricas(A, reconstruir(DELTA * q))
+            bits = bits_estimados(q, M, regla)
+            bpp = bits / A.size                               # bits por píxel (sin comprimir = 8)
+            kb = bits / 8 / 1024                              # tamaño estimado comprimido en KB
+
+            print(f"  {regla:<10}{p:>4}{error_rel:>10.4f}{psnr:>9.2f}{energia:>10.5f}{str(err_igual_desc):>10}{psnr_q:>9.2f}{bpp:>7.3f}{kb:>8.1f}")
+
+            ejes[f, c + 1].imshow(np.clip(A_rec, 0, 1), cmap="gray", vmin=0, vmax=1)   # misma escala
+            texto = "exacta" if psnr == np.inf or psnr > 100 else f"{psnr:.1f} dB"
+            ejes[f, c + 1].set_title(f"{p}%  PSNR={texto}")
+
+    for ax in ejes.ravel():
+        ax.set_xticks([]); ax.set_yticks([])
+    fig.suptitle(f"Haar - {nombre}")
+    fig.tight_layout()
+    fig.savefig(f"resultados/haar_{nombre}.png", dpi=100)
+    plt.close(fig)
+
+if rutas:
+    print("\nListo: figuras en resultados/")
+else:
+    print("No hay imágenes en la carpeta imagenes/")
