@@ -43,7 +43,7 @@ def reconstruir(C):  return idctn(C, norm="ortho")    # A = D^T C D
 
 # ------- 3. Reglas de selección  ---
 def seleccion_magnitud(C, k):
-    """Los k coeficientes de mayor |c|."""
+    """Los k coeficientes de mayor."""
     orden = np.argsort(np.abs(C).ravel())[-k:]     # posiciones de los k más grandes
     M = np.zeros(C.size, dtype=bool)
     M[orden] = True
@@ -51,8 +51,7 @@ def seleccion_magnitud(C, k):
 
 
 def seleccion_prefijada(C, k):
-    """Las k frecuencias más bajas (esquina superior izquierda, ordenadas por i + j).
-       Las posiciones no dependen de la imagen."""
+    """Las k frecuencias más bajas"""
     i, j = np.indices(C.shape)
     orden = np.argsort((i + j).ravel(), kind="stable")[:k]
     M = np.zeros(C.size, dtype=bool)
@@ -62,15 +61,13 @@ def seleccion_prefijada(C, k):
 
 # -4. Error de recuperación--
 def error_recuperacion(A, A_rec):
-    """||A - A_rec||_F / ||A||_F"""
     return np.linalg.norm(A - A_rec) / np.linalg.norm(A)
 
 
 def bits_estimados(q, M, regla):
-    """cabecera (64) + valores (k enteros) + posiciones (solo si la regla es por magnitud)."""
     k = int(M.sum())
-    bits_por_valor = int(np.ceil(np.log2(np.abs(q[M]).max() + 1))) + 1   # +1 por el signo
-    bits_posiciones = k * int(np.ceil(np.log2(q.size))) if regla == "magnitud" else 0   # bits de una posición (redondeado hacia arriba)
+    bits_por_valor = int(np.ceil(np.log2(np.abs(q[M]).max() + 1))) + 1   
+    bits_posiciones = k * int(np.ceil(np.log2(q.size))) if regla == "magnitud" else 0   
     return 64 + k * bits_por_valor + bits_posiciones
 
 
@@ -123,7 +120,7 @@ for ruta in rutas:
             extra = f"{error_sin:>13.2%}{mse_sin:>12.6f}{energia:>18.2%}" if MOSTRAR_SIN_DELTA else ""
             print(f"  {regla:<10}{p:>7}{extra}{mse:>12.6f}{error_rel:>24.2%}{tasa:>19.1f}:1{kb:>17.1f} KB")
 
-            # guardar cada imagen comprimida (tamaño real) en resultados/
+            # guardar cada imagen comprimida en resultados/
             if (regla == "prefijada" and GUARDAR_PREFIJADA) or (regla == "magnitud" and GUARDAR_MAGNITUD):
                 Image.fromarray(np.uint8(np.round(np.clip(A_rec, 0, 1) * 255))).save(f"resultados/{nombre}_{regla}_{p}.png")
 
